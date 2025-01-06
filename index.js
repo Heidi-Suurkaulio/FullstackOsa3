@@ -54,15 +54,42 @@ app.delete('/api/persons/:id', (request, response) => {
 })
 
 /**
+ * Checks whether or not given name already exists
+ * @param {string} name 
+ * @returns {boolean} true if name already exists, false if name is unique
+ */
+function isDublicate(name) {
+    return persons.some(pe => pe.name === name)
+}
+
+/**
  * Random number for id
  * @returns {integer} random number between 0 and 499
  */
 function makeRandom() {
-    return Math.floor(Math.random()* 500)
+    return Math.floor(Math.random() * 500)
 }
 
 app.post('/api/persons', (request, response) => {
     const body = request.body
+
+    if (!body.number) {
+        return response.status(400).json({
+            error: 'no phone number'
+        })
+    }
+    
+    if (!body.name) {
+        return response.status(400).json({
+            error: 'no name'
+        })
+    }
+
+    if (isDublicate(body.name)) {
+        return response.status(400).json({
+            error: 'name must be unique'
+        })
+    }
 
     const nPerson = {
         name: body.name,
