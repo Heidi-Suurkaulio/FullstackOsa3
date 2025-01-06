@@ -24,11 +24,19 @@ let persons = [
     }
 ]
 
+const ln = persons.length
+const now = new Date()
+
+app.get('/info', (request, response) => {
+    response.send(`<p>Phonebook has info for ${ln} people</p>
+        <p>${now.toString()}</p>`)
+})
+
 app.get('/api/persons', (request, response) => {
     response.json(persons)
-  })
+})
 
 const PORT = 3001
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`)
+    console.log(`Server running on port ${PORT}`)
 })
