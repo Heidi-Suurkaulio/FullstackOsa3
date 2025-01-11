@@ -38,18 +38,13 @@ app.get('/api/persons/:id', (request, response) => {
     })
 })
 
-//TODO fix
 app.delete('/api/persons/:id', (request, response) => {
-    Persons.findByIdAndDelete(request.params.id).then(
-      response.status(204)  
+    Persons.findByIdAndDelete(request.params.id).then(result => 
+        response.status(204).end() 
     ).catch(err => {
         console.log('id not found', err.message)
         response.status(404).end()
     })
-/*     const id = request.params.id
-    persons = persons.filter(p => p.id !== id)
-
-    response.status(204).end() */
 })
 
 /**
