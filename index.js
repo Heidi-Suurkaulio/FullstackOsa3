@@ -10,7 +10,7 @@ app.use(express.static('dist'))
 
 const Persons = require('./models/person')
 
-morgan.token('type', function(request, response) {
+morgan.token('type', function (request, response) {
     return JSON.stringify(request.body)
 })
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :type'))
@@ -26,25 +26,29 @@ app.get('/info', (request, response) => {
 app.get('/api/persons', (request, response) => {
     Persons.find({}).then(pe => {
         response.json(pe)
-      })
+    }).catch(unknownEndpoint)
 })
 
-app.get('/api/persons/:id', (request, response) => {
-    Persons.findById(request.params.id).then(p => 
-        response.json(p)
-    ).catch(err => {
-        console.log('id not found', err.message)
-        response.status(404).end()
-    })
+app.get('/api/persons/:id', (request, response, next) => {
+    Persons.findById(request.params.id).then(p => {
+        if (p) {
+            response.json(p).end()
+        } else {
+            response.status(404).end()
+        }
+    }
+    ).catch(err => next(err))
 })
 
-app.delete('/api/persons/:id', (request, response) => {
-    Persons.findByIdAndDelete(request.params.id).then(result => 
-        response.status(204).end() 
-    ).catch(err => {
-        console.log('id not found', err.message)
-        response.status(404).end()
-    })
+app.delete('/api/persons/:id', (request, response, next) => {
+    Persons.findByIdAndDelete(request.params.id).then(result => {
+        if (result) {
+            response.status(204).end()
+        } else {
+            response.status(404).end()
+        }
+    }
+    ).catch(err => next(err))
 })
 
 /**
@@ -74,18 +78,18 @@ app.post('/api/persons', (request, response) => {
             error: 'phone number missing'
         })
     }
-    
+
     if (!body.name) {
         return response.status(400).json({
             error: 'name missing'
         })
     }
-//TODO fix
-/*     if (isDuplicate(body.name)) {
-        return response.status(400).json({
-            error: 'name must be unique'
-        })
-    } */
+    //TODO fix
+    /*     if (isDuplicate(body.name)) {
+            return response.status(400).json({
+                error: 'name must be unique'
+            })
+        } */
 
     const nPerson = new Persons({
         name: body.name,
@@ -94,6 +98,22 @@ app.post('/api/persons', (request, response) => {
 
     nPerson.save().then(sp => response.json(sp))
 })
+
+const unknownEndpoint = (request, response) => {
+    response.status(404).send({ error: 'unknown endpoint' })
+}
+app.use(unknownEndpoint)
+
+const errorHandler = (err, request, response, next) => {
+    console.error(err.message)
+
+    if (err.name === 'CastError') {
+        return response.status(400).send({ error: 'malformatted id' })
+    }
+
+    next(err)
+}
+app.use(errorHandler)
 
 const PORT = process.env.PORT
 app.listen(PORT, () => {
