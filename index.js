@@ -38,60 +38,66 @@ app.get('/api/persons/:id', (request, response) => {
     })
 })
 
-// TODO next ones are not working
+//TODO fix
 app.delete('/api/persons/:id', (request, response) => {
-    const id = request.params.id
+    Persons.findByIdAndDelete(request.params.id).then(
+      response.status(204)  
+    ).catch(err => {
+        console.log('id not found', err.message)
+        response.status(404).end()
+    })
+/*     const id = request.params.id
     persons = persons.filter(p => p.id !== id)
 
-    response.status(204).end()
+    response.status(204).end() */
 })
 
 /**
+ * TODO fix
  * Checks whether or not given name already exists
  * @param {string} name 
  * @returns {boolean} true if name already exists, false if name is unique
  */
-function isDublicate(name) {
+/* function isDuplicate(name) {
     return persons.some(pe => pe.name === name)
-}
+} */
 
 /**
+ * TODO remove?
  * Random number for id
  * @returns {integer} random number between 0 and 499
  */
-function makeRandom() {
+/* function makeRandom() {
     return Math.floor(Math.random() * 500)
-}
+} */
 
 app.post('/api/persons', (request, response) => {
     const body = request.body
 
     if (!body.number) {
         return response.status(400).json({
-            error: 'no phone number'
+            error: 'phone number missing'
         })
     }
     
     if (!body.name) {
         return response.status(400).json({
-            error: 'no name'
+            error: 'name missing'
         })
     }
-
-    if (isDublicate(body.name)) {
+//TODO fix
+/*     if (isDuplicate(body.name)) {
         return response.status(400).json({
             error: 'name must be unique'
         })
-    }
+    } */
 
-    const nPerson = {
+    const nPerson = new Persons({
         name: body.name,
-        number: body.number,
-        id: makeRandom()
-    }
-    persons = persons.concat(nPerson)
+        number: body.number
+    })
 
-    response.json(nPerson)
+    nPerson.save().then(sp => response.json(sp))
 })
 
 const PORT = process.env.PORT
