@@ -1,7 +1,7 @@
 POST http://localhost:3001/api/persons
-Content-Type: application/json
+content-Type: application/json
 
 {
-    "name": "Reino Doggo",
-    "number": "046-5647-67119"
+    "name": "Kaija Ilmaihminen",
+    "number": "0890-3223-76"
 }

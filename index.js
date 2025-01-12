@@ -15,12 +15,12 @@ morgan.token('type', function (request, response) {
 })
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :type'))
 
-const ln = Persons.length
-const now = new Date()
-
-app.get('/info', (request, response) => {
-    response.send(`<p>Phonebook has info for ${ln} people</p>
-        <p>${now.toString()}</p>`)
+app.get('/info', (request, response, next) => {
+    const now = new Date()
+    Persons.countDocuments({}).then(count => {
+        response.send(`<p>Phonebook has info for ${count} people</p>
+            <p>${now.toString()}</p>`)
+    }).catch(error => next(error)) 
 })
 
 app.get('/api/persons', (request, response) => {
@@ -51,25 +51,6 @@ app.delete('/api/persons/:id', (request, response, next) => {
     ).catch(err => next(err))
 })
 
-/**
- * TODO fix
- * Checks whether or not given name already exists
- * @param {string} name 
- * @returns {boolean} true if name already exists, false if name is unique
- */
-/* function isDuplicate(name) {
-    return persons.some(pe => pe.name === name)
-} */
-
-/**
- * TODO remove?
- * Random number for id
- * @returns {integer} random number between 0 and 499
- */
-/* function makeRandom() {
-    return Math.floor(Math.random() * 500)
-} */
-
 app.post('/api/persons', (request, response) => {
     const body = request.body
 
@@ -84,12 +65,6 @@ app.post('/api/persons', (request, response) => {
             error: 'name missing'
         })
     }
-    //TODO fix
-    /*     if (isDuplicate(body.name)) {
-            return response.status(400).json({
-                error: 'name must be unique'
-            })
-        } */
 
     const nPerson = new Persons({
         name: body.name,
@@ -97,6 +72,23 @@ app.post('/api/persons', (request, response) => {
     })
 
     nPerson.save().then(sp => response.json(sp))
+})
+
+app.put('/api/persons/:id', (request, response, next) => {
+    const body = request.body
+
+    if (!body.number) {
+        return response.status(400).json({
+            error: 'phone number missing'
+        })
+    }
+
+    Persons.findByIdAndUpdate(request.params.id,
+        { number: body.number }, {
+        new: true
+    }).then(p => {
+        response.json(p).end()
+    }).catch(err => next(err))
 })
 
 const unknownEndpoint = (request, response) => {
@@ -109,6 +101,12 @@ const errorHandler = (err, request, response, next) => {
 
     if (err.name === 'CastError') {
         return response.status(400).send({ error: 'malformatted id' })
+    }
+    if (err.name === 'ValidationError') {
+        return response.status(403).send({ err: 'missing data' })
+    }
+    if (err.name === 'DocumentNotFoundError') {
+        return response.status(404).send({ err: 'resouce not found' })
     }
 
     next(err)
