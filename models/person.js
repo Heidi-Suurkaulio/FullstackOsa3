@@ -13,8 +13,15 @@ mongo.connect(url)
     })
 
 const newSchema = new mongo.Schema({
-    name: String,
-    number: String
+    name: {
+        type: String,
+        minlength: 3,
+        required: true
+    },
+    number: {
+        type: String,
+        required: true
+    }
 })
 
 newSchema.set('toJSON', {

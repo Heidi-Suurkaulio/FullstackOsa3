@@ -51,41 +51,25 @@ app.delete('/api/persons/:id', (request, response, next) => {
     ).catch(err => next(err))
 })
 
-app.post('/api/persons', (request, response) => {
+app.post('/api/persons', (request, response, next) => {
     const body = request.body
-
-    if (!body.number) {
-        return response.status(400).json({
-            error: 'phone number missing'
-        })
-    }
-
-    if (!body.name) {
-        return response.status(400).json({
-            error: 'name missing'
-        })
-    }
 
     const nPerson = new Persons({
         name: body.name,
-        number: body.number
+        number: body.number 
     })
 
-    nPerson.save().then(sp => response.json(sp))
+    nPerson.save().then(sp => response.json(sp)).
+    catch(error => next(error))
 })
 
 app.put('/api/persons/:id', (request, response, next) => {
     const body = request.body
 
-    if (!body.number) {
-        return response.status(400).json({
-            error: 'phone number missing'
-        })
-    }
-
+    // handles empty put request for some reason...
     Persons.findByIdAndUpdate(request.params.id,
         { number: body.number }, {
-        new: true
+        new: true, runValidators: true, context: 'query'
     }).then(p => {
         response.json(p).end()
     }).catch(err => next(err))
@@ -103,7 +87,7 @@ const errorHandler = (err, request, response, next) => {
         return response.status(400).send({ error: 'malformatted id' })
     }
     if (err.name === 'ValidationError') {
-        return response.status(403).send({ err: 'missing data' })
+        return response.status(403).json({ error: err.message })
     }
     if (err.name === 'DocumentNotFoundError') {
         return response.status(404).send({ err: 'resouce not found' })
